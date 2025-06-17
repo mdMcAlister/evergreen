@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtanBio: An Interactive AI Due Diligence Meta-Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Calm Horizon" (Slate, Sky Blue, Amber, White) -->
+    <!-- Application Structure Plan: A single-page dashboard design with top navigation to switch between four key views: 'Overview', 'Report Comparison', 'Critical Issues', and 'Final Verdict'. This non-linear structure is chosen over a simple scroll to empower users to directly compare reports and explore specific areas of conflict, mirroring the analytical process of a real due diligence officer. The core interactions are a side-by-side report selector and an interactive exploration of the "showstopper" risks, designed to make the report's complex comparisons digestible and engaging. -->
+    <!-- Visualization & Content Choices:
+    - Report Scores: Goal: Compare overall performance. Method: Horizontal Bar Chart (Chart.js/Canvas). Interaction: Hover for details. Justification: Provides a clear, at-a-glance ranking of the five reports' utility.
+    - Factual Discrepancies: Goal: Highlight specific contradictions. Method: Interactive Table/Card Layout (HTML/CSS/JS). Interaction: User selects a conflict area (e.g., 'Delivery Vector') to see what each report claimed. Justification: Turns a static table into an exploratory tool.
+    - Development Plan Flaw: Goal: Organize and explain a process. Method: Side-by-side flow diagrams (HTML/CSS/Tailwind). Interaction: Static visual comparison. Justification: Clearly illustrates the strategic error without complex graphics, adhering to the NO SVG rule.
+    - Side-by-Side Comparison: Goal: Allow direct, user-driven comparison. Method: Two dropdowns updating a comparison table (HTML/JS). Justification: This is the core interactive feature, allowing users to create their own comparisons based on the source data.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .chart-container { position: relative; width: 100%; max-width: 900px; margin-left: auto; margin-right: auto; height: 400px; max-height: 50vh; }
+        .radar-chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 500px; max-height: 60vh; }
+        .nav-btn { transition: all 0.3s ease; }
+        .nav-btn.active { background-color: #0369a1; color: white; }
+        .nav-btn:not(.active):hover { background-color: #f1f5f9; }
+        .flow-diagram-box { border: 2px solid; padding: 1rem; border-radius: 0.5rem; text-align: center; margin-bottom: 0.5rem; font-weight: 500;}
+        .flow-arrow { font-size: 2rem; color: #64748b; margin: 0.25rem 0; }
+        .card-grade {
+            font-size: 1.5rem;
+            font-weight: 700;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-700">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">ArtanBio Due Diligence</h1>
+            <p class="mt-2 text-lg text-slate-600">An Interactive Meta-Analysis of AI-Generated Reports</p>
+        </header>
+
+        <nav class="flex flex-wrap justify-center gap-2 md:gap-4 mb-10 p-2 bg-white rounded-xl shadow-sm border border-slate-200">
+            <button data-view="overview" class="nav-btn active px-4 py-2 rounded-lg font-semibold text-slate-600">Overview</button>
+            <button data-view="model-analysis" class="nav-btn px-4 py-2 rounded-lg font-semibold text-slate-600">AI Model Analysis</button>
+            <button data-view="comparison" class="nav-btn px-4 py-2 rounded-lg font-semibold text-slate-600">Report Comparison</button>
+            <button data-view="issues" class="nav-btn px-4 py-2 rounded-lg font-semibold text-slate-600">Critical Issues</button>
+            <button data-view="verdict" class="nav-btn px-4 py-2 rounded-lg font-semibold text-slate-600">Final Verdict</button>
+        </nav>
+
+        <main>
+            <!-- Overview Section -->
+            <section id="overview" class="view active">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Executive Summary & Initial Scoring</h2>
+                    <p class="mb-6 text-slate-600">
+                        This analysis synthesizes five distinct AI-generated due diligence reports on ArtanBio, a preclinical biotech company. The goal is to compare factual accuracy, analytical depth, and critical insight to form a unified, reliable assessment. The reports show profound discrepancies, highlighting the need for careful verification of AI intelligence. Below is a comparative scoring of the reports, revealing a wide range in quality and utility for strategic decision-making.
+                    </p>
+                    <div class="chart-container">
+                        <canvas id="scoresChart"></canvas>
+                    </div>
+                     <div class="mt-8 text-center text-sm text-slate-500">
+                        <p>This chart provides an at-a-glance comparison of the overall utility of each AI report. Hover over the bars to see detailed scores across four key criteria: Factual Accuracy, Analytical Depth, Critical Insight, and Clarity.</p>
+                    </div>
+                </div>
+            </section>
+
+             <!-- AI Model Analysis Section -->
+            <section id="model-analysis" class="view">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Dissecting AI Performance</h2>
+                    <p class="mb-8 text-slate-600 max-w-4xl mx-auto text-center">
+                        Not all AI analysis is created equal. The value of an AI-generated report depends not just on its factual accuracy, but on its ability to synthesize information, provide critical insight, and structure a coherent narrative. This section dissects the performance of each model across key qualitative dimensions, revealing their distinct "personalities" and capabilities.
+                    </p>
+                    
+                    <div class="radar-chart-container mb-12">
+                        <canvas id="modelRadarChart"></canvas>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-800">Gemini 2.5 Pro (Deep Research)</h3>
+                                    <p class="text-sky-600 font-semibold">Persona: The Investor's Scalpel</p>
+                                </div>
+                                <div class="card-grade bg-sky-100 text-sky-700 border-2 border-sky-300">A+</div>
+                            </div>
+                            <div class="space-y-3 flex-grow">
+                                <p><strong>What it did well:</strong> Unparalleled critical insight; identified "showstopper" risks (Efficacy Chasm, FTO Landmine); framed analysis from a VC perspective; assessed strategic implications, not just facts.</p>
+                                <p><strong>What it did poorly:</strong> Tone could be perceived as overly harsh if not viewed through an investor lens.</p>
+                                <p><strong>Unique Contribution:</strong> Moved beyond describing risks to passing judgment on their deal-breaking potential, making it the most actionable report for decision-making.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-800">OpenAI (Deep Research)</h3>
+                                    <p class="text-blue-600 font-semibold">Persona: The Foundational Encyclopedia</p>
+                                </div>
+                                <div class="card-grade bg-blue-100 text-blue-700 border-2 border-blue-300">B+</div>
+                            </div>
+                             <div class="space-y-3 flex-grow">
+                                <p><strong>What it did well:</strong> Exhaustive narrative detail; comprehensive explanations of science and strategy; excellent structure and clarity; factually perfect.</p>
+                                <p><strong>What it did poorly:</strong> Lacked sharp, critical judgment; identified risks but failed to assess their strategic severity.</p>
+                                <p><strong>Unique Contribution:</strong> Provided the most detailed foundational overview, making it the best starting point for understanding the company's story.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-800">OpenAI o3</h3>
+                                    <p class="text-slate-600 font-semibold">Persona: The Analyst's Cheat Sheet</p>
+                                </div>
+                                <div class="card-grade bg-slate-200 text-slate-700 border-2 border-slate-400">B-</div>
+                            </div>
+                             <div class="space-y-3 flex-grow">
+                                <p><strong>What it did well:</strong> Highly efficient data presentation; effective use of tables and bullet points for quick reference; high data density.</p>
+                                <p><strong>What it did poorly:</strong> Lacked narrative depth and critical analysis; assumed significant prior knowledge from the user.</p>
+                                <p><strong>Unique Contribution:</strong> Its format made it the best quick-reference guide for an expert audience needing to refresh key facts.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-800">Perplexity Pro (Deep Research)</h3>
+                                    <p class="text-slate-600 font-semibold">Persona: The Reliable Summarizer</p>
+                                </div>
+                                 <div class="card-grade bg-slate-200 text-slate-700 border-2 border-slate-400">C</div>
+                            </div>
+                             <div class="space-y-3 flex-grow">
+                                <p><strong>What it did well:</strong> Faithfully and accurately summarized its source material; good clarity and formatting.</p>
+                                <p><strong>What it did poorly:</strong> Offered no original analysis or insight beyond its sources; purely descriptive.</p>
+                                <p><strong>Unique Contribution:</strong> Functioned as a reliable "control" confirming baseline facts, but added no new value.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-rose-50 p-6 rounded-xl border-2 border-rose-200 flex flex-col lg:col-span-2 mx-auto w-full lg:w-3/4">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-rose-800">Aubr.ai</h3>
+                                    <p class="text-rose-600 font-semibold">Persona: The Hallucinating Impostor</p>
+                                </div>
+                                 <div class="card-grade bg-rose-200 text-rose-700 border-2 border-rose-400">F</div>
+                            </div>
+                            <div class="space-y-3 flex-grow">
+                                <p><strong>What it did well:</strong> Produced a plausible-sounding, professionally formatted report (a dangerous strength).</p>
+                                <p><strong>What it did poorly:</strong> Catastrophically failed on factual accuracy, inventing the team, technology, and preclinical data. Built its entire analysis on a fictional foundation.</p>
+                                <p><strong>Unique Contribution:</strong> Served as an invaluable cautionary tale on the dangers of unverified AI and confident hallucinations.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Comparison Section -->
+            <section id="comparison" class="view">
+                 <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Side-by-Side Report Comparison</h2>
+                    <p class="mb-6 text-slate-600">
+                        The true value of this meta-analysis lies in direct comparison. The five AI reports diverged on fundamental facts about ArtanBio's technology, team, and financials. Use the selectors below to choose any two reports and compare their claims on key diligence parameters head-to-head. This tool allows you to interactively explore the specific points of agreement and, more importantly, contradiction.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="reportA" class="block text-sm font-medium text-slate-700 mb-1">Select Report A</label>
+                            <select id="reportA" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                            </select>
+                        </div>
+                        <div>
+                            <label for="reportB" class="block text-sm font-medium text-slate-700 mb-1">Select Report B</label>
+                            <select id="reportB" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Parameter</th>
+                                    <th id="headerA" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Report A</th>
+                                    <th id="headerB" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Report B</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonTableBody" class="bg-white divide-y divide-slate-200">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Issues Section -->
+            <section id="issues" class="view">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">"Showstopper" Risks & Strategic Flaws</h2>
+                    <p class="mb-8 text-slate-600">
+                        Beyond simple factual errors, the most insightful analysis uncovered several fundamental strategic and structural risks that could be "showstoppers" for institutional investors. These issues relate to the company's development plan, intellectual property freedom, and corporate governance. Exploring these critical issues is essential to understanding ArtanBio's true investment potential.
+                    </p>
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-800 mb-3">1. The Efficacy Chasm: A Flawed Development Plan</h3>
+                            <p class="mb-4 text-slate-600">A key finding was that ArtanBio's development plan inverts the logical sequence of biotech de-risking. It prioritizes expensive manufacturing and toxicology studies before proving the therapy actually works in a living animal model, creating an "efficacy chasm" and gambling investor capital.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                    <h4 class="font-bold text-center text-slate-800 mb-4">ArtanBio's Proposed Plan</h4>
+                                    <div class="flow-diagram-box border-amber-400 text-amber-700 bg-amber-50">GMP Manufacturing ($2M)</div>
+                                    <div class="text-center flow-arrow">&darr;</div>
+                                    <div class="flow-diagram-box border-amber-400 text-amber-700 bg-amber-50">GLP Toxicology ($1M)</div>
+                                    <div class="text-center flow-arrow">&darr;</div>
+                                    <div class="flow-diagram-box border-rose-500 text-rose-700 bg-rose-50">Animal Efficacy Study (?)</div>
+                                    <p class="text-xs text-center mt-2 text-rose-600">Core biological risk is addressed last.</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                    <h4 class="font-bold text-center text-slate-800 mb-4">Standard Biotech Plan</h4>
+                                    <div class="flow-diagram-box border-sky-500 text-sky-700 bg-sky-50">Animal Efficacy Study</div>
+                                     <div class="text-center flow-arrow">&darr;</div>
+                                    <div class="flow-diagram-box border-slate-400 text-slate-600 bg-slate-100">GMP Manufacturing</div>
+                                     <div class="text-center flow-arrow">&darr;</div>
+                                    <div class="flow-diagram-box border-slate-400 text-slate-600 bg-slate-100">GLP Toxicology</div>
+                                    <p class="text-xs text-center mt-2 text-sky-600">Core biological risk is addressed first to justify further spend.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-800 mb-3">2. The "Freedom-to-Operate Landmine"</h3>
+                             <p class="mb-4 text-slate-600">A critical risk, only identified in one report, is a patent application (US20170354672A1) listing ArtanBio's CSO, Dr. Michael Torres, as a co-inventor from his time at a previous institution. This patent, covering tRNA delivery, is assigned to the University of Texas system. Without a secured license, this represents a major unresolved legal obstacle that could halt development.</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-800 mb-3">3. Novel Governance: The DeSci / Venture Capital Bridge</h3>
+                            <p class="mb-4 text-slate-600">ArtanBio was incubated by VitaDAO, a Decentralized Science (DeSci) organization. Its IP is managed via an IP-NFT, representing legal ownership on-chain. While this decentralized model presents friction for traditional VCs requiring centralized control, it is not fundamentally incompatible. The investment by Pfizer Ventures in VitaDAO signals that sophisticated players are building bridges to this new ecosystem.</p>
+                            <div class="p-4 bg-sky-50 rounded-lg border border-sky-200">
+                                <h4 class="font-semibold text-sky-800">The Path to Compatibility: A Hybrid SPV Model</h4>
+                                <p class="mt-2 text-slate-600">A viable path forward involves creating a standard C-Corporation ("NewCo") that VCs can invest in. The DAO places the IP-NFT into a separate legal entity (a Special Purpose Vehicle, or SPV). This SPV then grants an exclusive license for the IP to NewCo in exchange for equity. VCs get the clean, centralized structure they require, while the DAO retains its ownership stake as a shareholder. This structure turns the governance challenge into a solvable legal engineering problem.</p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Verdict Section -->
+            <section id="verdict" class="view">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Synthesized Assessment & Final Verdict</h2>
+                    <p class="mb-6 text-slate-600">
+                        By integrating the most reliable data and critical insights while discarding the hallucinations, a unified assessment of ArtanBio emerges. This synthesis provides a clear, actionable picture of the company's strengths, weaknesses, and overall investment thesis, moving beyond the fragmented views of the individual AI reports.
+                    </p>
+                    <div class="space-y-6">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <h3 class="text-lg font-semibold text-sky-800">✅ Strengths: The Vision & Team</h3>
+                            <ul class="mt-2 list-disc list-inside text-slate-600 space-y-1">
+                                <li><strong>Visionary Science:</strong> A compelling "pipeline-in-a-product" concept targeting a fundamental mechanism of aging.</li>
+                                <li><strong>Proven Founders:</strong> Leadership with deep, specific expertise in tRNA therapeutics (Dr. Torres) and biotech operations (Dr. Schwartz).</li>
+                                <li><strong>Strong Partnerships:</strong> Collaboration with top-tier CDMO Lonza de-risks manufacturing.</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 bg-rose-50 rounded-lg border border-rose-200">
+                             <h3 class="text-lg font-semibold text-rose-800">❌ Weaknesses: The Strategy & Structure</h3>
+                            <ul class="mt-2 list-disc list-inside text-slate-600 space-y-1">
+                                <li><strong>Flawed Development Plan:</strong> Prioritizing manufacturing spend before proving in vivo efficacy is a critical strategic error.</li>
+                                <li><strong>Unresolved IP Risk:</strong> A major Freedom-to-Operate issue with a founder's prior patent remains unaddressed.</li>
+                                <li><strong>Novel Governance Model:</strong> The DeSci structure requires a clear legal bridge (e.g., an SPV) to be compatible with standard VC investment terms.</li>
+                                <li><strong>Founder Bandwidth:</strong> Key leadership holds concurrent, demanding roles at other companies.</li>
+                             </ul>
+                        </div>
+                        <div>
+                             <h3 class="text-xl font-bold text-slate-900 mt-8 mb-3">Final Recommendation: NO-GO (In Current Form)</h3>
+                             <p class="text-slate-600">While ArtanBio possesses a high-impact scientific concept and a top-tier founding team, the strategic and structural risks are currently unacceptable for institutional investment. The company is a classic high-risk, high-reward venture, but the primary risks are self-inflicted and must be resolved. To become investable, ArtanBio must:</p>
+                             <ol class="mt-4 list-decimal list-inside space-y-2 text-slate-700 font-medium">
+                                 <li>Re-sequence its development plan to prioritize and generate definitive in vivo efficacy data.</li>
+                                 <li>Secure a clear license or legal opinion resolving the Freedom-to-Operate patent conflict.</li>
+                                 <li>Establish a formal legal bridge between the DAO-held IP and a new C-Corporation to create a venture-compatible investment structure.</li>
+                             </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const reportData = {
+                'deep-research': {
+                    name: 'OpenAI (Deep Research)',
+                    scores: { 'Factual Accuracy': 5, 'Analytical Depth': 5, 'Critical Insight': 3, 'Clarity & Structure': 5 },
+                    utility: 4.0,
+                    params: {
+                        vector: 'AAV9',
+                        founders: 'Schwartz / Torres',
+                        data: 'p53 rescue, mouse PK',
+                        funding: '~$400k',
+                        ask: '$5M',
+                        recommendation: 'Go (Conditional)'
+                    }
+                },
+                'o3': {
+                    name: 'OpenAI o3',
+                    scores: { 'Factual Accuracy': 5, 'Analytical Depth': 3, 'Critical Insight': 3, 'Clarity & Structure': 4 },
+                    utility: 3.5,
+                    params: {
+                        vector: 'AAV9',
+                        founders: 'Schwartz / Torres',
+                        data: 'p53 rescue, mouse PK',
+                        funding: '~$350k on hand',
+                        ask: '$5M Series A',
+                        recommendation: 'Go (Conditional)'
+                    }
+                },
+                'aubrai': {
+                    name: 'Aubr.ai',
+                    scores: { 'Factual Accuracy': 1, 'Analytical Depth': 2, 'Critical Insight': 1, 'Clarity & Structure': 3 },
+                    utility: 1.0,
+                    params: {
+                        vector: 'LNP (Hallucinated)',
+                        founders: 'Arta / Santos (Fictional)',
+                        data: '+ GFP, CF organoids, mdx mouse (Fabricated)',
+                        funding: '$4.2M (Incorrect)',
+                        ask: '$8M bridge, $25M Series A (Incorrect)',
+                        recommendation: 'Go (Conditional)'
+                    }
+                },
+                'perplexity': {
+                    name: 'Perplexity Pro (Deep Research)',
+                    scores: { 'Factual Accuracy': 5, 'Analytical Depth': 3, 'Critical Insight': 2, 'Clarity & Structure': 4 },
+                    utility: 3.0,
+                    params: {
+                        vector: 'AAV9',
+                        founders: 'Schwartz / Torres',
+                        data: 'p53 rescue, mouse PK',
+                        funding: '~$400k',
+                        ask: '$5M',
+                        recommendation: 'Go (Conditional)'
+                    }
+                },
+                 'longevity-dd': {
+                    name: 'Gemini 2.5 Pro (Deep Research)',
+                    scores: { 'Factual Accuracy': 5, 'Analytical Depth': 5, 'Critical Insight': 5, 'Clarity & Structure': 4 },
+                    utility: 5.0,
+                    params: {
+                        vector: 'AAV9',
+                        founders: 'Schwartz / Torres',
+                        data: 'p53 rescue, mouse PK',
+                        funding: '~$400k',
+                        ask: '$5M',
+                        recommendation: 'NO-GO (in current form)'
+                    }
+                }
+            };
+            
+            const comparisonParams = [
+                { id: 'vector', name: 'Delivery Vector' },
+                { id: 'founders', name: 'Founders (CEO/CSO)' },
+                { id: 'data', name: 'Preclinical Data' },
+                { id: 'funding', name: 'Funding Raised' },
+                { id: 'ask', name: 'Current Ask' },
+                { id: 'recommendation', name: 'Final Recommendation' }
+            ];
+
+            const navButtons = document.querySelectorAll('.nav-btn');
+            const views = document.querySelectorAll('.view');
+
+            function switchView(viewName) {
+                views.forEach(view => {
+                    const isActive = view.id === viewName;
+                    view.classList.toggle('active', isActive);
+                });
+                navButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === viewName);
+                });
+                window.scrollTo(0, 0);
+
+                if (viewName === 'model-analysis') {
+                   renderRadarChart();
+                }
+            }
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    switchView(button.dataset.view);
+                });
+            });
+
+            const scoresChartCtx = document.getElementById('scoresChart').getContext('2d');
+            const sortedReports = Object.values(reportData).sort((a, b) => a.utility - b.utility);
+
+            new Chart(scoresChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: sortedReports.map(r => r.name),
+                    datasets: [{
+                        label: 'Overall Utility Score',
+                        data: sortedReports.map(r => r.utility),
+                        backgroundColor: sortedReports.map(r => {
+                            if (r.utility >= 4.0) return 'rgba(3, 105, 161, 0.7)'; // sky-700
+                            if (r.utility >= 3.0) return 'rgba(217, 119, 6, 0.7)'; // amber-600
+                            return 'rgba(220, 38, 38, 0.7)'; // rose-600
+                        }),
+                        borderColor: sortedReports.map(r => {
+                            if (r.utility >= 4.0) return 'rgba(3, 105, 161, 1)';
+                            if (r.utility >= 3.0) return 'rgba(217, 119, 6, 1)';
+                            return 'rgba(220, 38, 38, 1)';
+                        }),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 5,
+                            grid: { color: 'rgba(203, 213, 225, 0.5)' }
+                        },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                footer: function(tooltipItems) {
+                                   const reportName = tooltipItems[0].label;
+                                   const report = Object.values(reportData).find(r => r.name === reportName);
+                                   if (!report) return '';
+                                   const scores = report.scores;
+                                   let footerText = '\n';
+                                   for (const [key, value] of Object.entries(scores)) {
+                                       footerText += `${key}: ${value}\n`;
+                                   }
+                                   return footerText;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            const reportA_selector = document.getElementById('reportA');
+            const reportB_selector = document.getElementById('reportB');
+            const comparisonTableBody = document.getElementById('comparisonTableBody');
+            const headerA = document.getElementById('headerA');
+            const headerB = document.getElementById('headerB');
+
+            function populateSelectors() {
+                const reportKeys = Object.keys(reportData);
+                reportKeys.forEach(key => {
+                    const optionA = document.createElement('option');
+                    optionA.value = key;
+                    optionA.textContent = reportData[key].name;
+                    reportA_selector.appendChild(optionA);
+
+                    const optionB = document.createElement('option');
+                    optionB.value = key;
+                    optionB.textContent = reportData[key].name;
+                    reportB_selector.appendChild(optionB);
+                });
+                reportA_selector.value = 'deep-research';
+                reportB_selector.value = 'aubrai';
+            }
+
+            function updateComparisonTable() {
+                const keyA = reportA_selector.value;
+                const keyB = reportB_selector.value;
+                const reportA = reportData[keyA];
+                const reportB = reportData[keyB];
+
+                headerA.textContent = reportA.name;
+                headerB.textContent = reportB.name;
+                
+                comparisonTableBody.innerHTML = '';
+
+                comparisonParams.forEach(param => {
+                    const row = document.createElement('tr');
+                    const valA = reportA.params[param.id];
+                    const valB = reportB.params[param.id];
+                    
+                    let highlightClass = '';
+                    if (valA !== valB) {
+                        highlightClass = 'bg-amber-50 font-medium';
+                    }
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${param.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 ${highlightClass}">${valA}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 ${highlightClass}">${valB}</td>
+                    `;
+                    comparisonTableBody.appendChild(row);
+                });
+            }
+
+            populateSelectors();
+            updateComparisonTable();
+
+            reportA_selector.addEventListener('change', updateComparisonTable);
+            reportB_selector.addEventListener('change', updateComparisonTable);
+
+            let radarChart = null;
+            function renderRadarChart() {
+                const ctx = document.getElementById('modelRadarChart');
+                if (!ctx || radarChart) return; 
+
+                const data = {
+                    labels: ['Factual Accuracy', 'Narrative Cohesion', 'Critical Insight', 'Data Synthesis', 'Structural Clarity', 'Risk Identification'],
+                    datasets: [
+                        {
+                            label: 'Gemini 2.5 Pro',
+                            data: [5, 5, 5, 5, 4, 5],
+                            borderColor: 'rgba(3, 105, 161, 1)',
+                            backgroundColor: 'rgba(3, 105, 161, 0.2)',
+                        },
+                         {
+                            label: 'OpenAI (DR)',
+                            data: [5, 5, 3, 4, 5, 4],
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        },
+                        {
+                            label: 'Perplexity Pro',
+                            data: [5, 4, 2, 2, 4, 2],
+                            borderColor: 'rgba(100, 116, 139, 1)',
+                            backgroundColor: 'rgba(100, 116, 139, 0.2)',
+                        },
+                        {
+                            label: 'Aubr.ai',
+                            data: [1, 3, 1, 1, 3, 1],
+                            borderColor: 'rgba(220, 38, 38, 1)',
+                            backgroundColor: 'rgba(220, 38, 38, 0.2)',
+                        },
+                    ]
+                };
+
+                radarChart = new Chart(ctx.getContext('2d'), {
+                    type: 'radar',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                        },
+                        scales: {
+                            r: {
+                                angleLines: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 5,
+                                pointLabels: {
+                                    font: {
+                                        size: 14,
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    backdropColor: 'rgba(255, 255, 255, 0.75)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>
