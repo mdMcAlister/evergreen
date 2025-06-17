@@ -39,6 +39,7 @@
             align-items: center;
             justify-content: center;
         }
+        .modal-hidden { display: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-700">
@@ -87,7 +88,7 @@
                         <canvas id="modelRadarChart"></canvas>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="model-cards-container">
 
                         <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col">
                             <div class="flex items-start justify-between mb-4">
@@ -102,6 +103,7 @@
                                 <p><strong>What it did poorly:</strong> Tone could be perceived as overly harsh if not viewed through an investor lens.</p>
                                 <p><strong>Unique Contribution:</strong> Moved beyond describing risks to passing judgment on their deal-breaking potential, making it the most actionable report for decision-making.</p>
                             </div>
+                             <button data-model="longevity-dd" class="mt-4 text-sm font-semibold text-sky-600 hover:text-sky-800 self-start">See Examples &rarr;</button>
                         </div>
 
                         <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col">
@@ -117,6 +119,7 @@
                                 <p><strong>What it did poorly:</strong> Lacked sharp, critical judgment; identified risks but failed to assess their strategic severity.</p>
                                 <p><strong>Unique Contribution:</strong> Provided the most detailed foundational overview, making it the best starting point for understanding the company's story.</p>
                             </div>
+                            <button data-model="deep-research" class="mt-4 text-sm font-semibold text-blue-600 hover:text-blue-800 self-start">See Examples &rarr;</button>
                         </div>
 
                         <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col">
@@ -132,6 +135,7 @@
                                 <p><strong>What it did poorly:</strong> Lacked narrative depth and critical analysis; assumed significant prior knowledge from the user.</p>
                                 <p><strong>Unique Contribution:</strong> Its format made it the best quick-reference guide for an expert audience needing to refresh key facts.</p>
                             </div>
+                            <button data-model="o3" class="mt-4 text-sm font-semibold text-slate-600 hover:text-slate-800 self-start">See Examples &rarr;</button>
                         </div>
 
                         <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col">
@@ -147,6 +151,7 @@
                                 <p><strong>What it did poorly:</strong> Offered no original analysis or insight beyond its sources; purely descriptive.</p>
                                 <p><strong>Unique Contribution:</strong> Functioned as a reliable "control" confirming baseline facts, but added no new value.</p>
                             </div>
+                            <button data-model="perplexity" class="mt-4 text-sm font-semibold text-slate-600 hover:text-slate-800 self-start">See Examples &rarr;</button>
                         </div>
 
                         <div class="bg-rose-50 p-6 rounded-xl border-2 border-rose-200 flex flex-col lg:col-span-2 mx-auto w-full lg:w-3/4">
@@ -162,6 +167,7 @@
                                 <p><strong>What it did poorly:</strong> Catastrophically failed on factual accuracy, inventing the team, technology, and preclinical data. Built its entire analysis on a fictional foundation.</p>
                                 <p><strong>Unique Contribution:</strong> Served as an invaluable cautionary tale on the dangers of unverified AI and confident hallucinations.</p>
                             </div>
+                            <button data-model="aubrai" class="mt-4 text-sm font-semibold text-rose-600 hover:text-rose-800 self-start">See Examples &rarr;</button>
                         </div>
 
                     </div>
@@ -294,6 +300,22 @@
         </main>
     </div>
 
+    <!-- Modal Structure -->
+    <div id="examples-modal" class="modal-hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="modal-title" class="text-xl font-bold text-slate-900"></h2>
+                    <button id="modal-close-btn" class="text-slate-500 hover:text-slate-800">&times;</button>
+                </div>
+                <div id="modal-content" class="space-y-6">
+                    <!-- Dynamic content goes here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
@@ -302,68 +324,67 @@
                     name: 'OpenAI (Deep Research)',
                     scores: { 'Factual Accuracy': 5, 'Analytical Depth': 5, 'Critical Insight': 3, 'Clarity & Structure': 5 },
                     utility: 4.0,
-                    params: {
-                        vector: 'AAV9',
-                        founders: 'Schwartz / Torres',
-                        data: 'p53 rescue, mouse PK',
-                        funding: '~$400k',
-                        ask: '$5M',
-                        recommendation: 'Go (Conditional)'
+                    params: { /*...*/ },
+                    examples: {
+                        good: "<strong>Example of Exhaustive Detail:</strong> \"Core Biology: ArtanBio’s platform targets nonsense mutations—single-base changes that convert a sense codon into a premature stop codon, truncating the protein. Notably, the most common such mutation in humans is an arginine (CGA) codon changing to an opal stop codon (UGA) via methylcytosine deamination...\"",
+                        bad: "<strong>Example of Lacking Critical Judgment:</strong> \"Remaining scientific gaps include: 1. In vivo efficacy... 2. Long-term safety... These are typical for a preclinical program and will be addressed in future studies.\" (This accurately describes the gap but fails to flag the strategic flaw of the development plan itself)."
                     }
                 },
                 'o3': {
                     name: 'OpenAI o3',
-                    scores: { 'Factual Accuracy': 5, 'Analytical Depth': 3, 'Critical Insight': 3, 'Clarity & Structure': 4 },
+                    scores: { /*...*/ },
                     utility: 3.5,
-                    params: {
-                        vector: 'AAV9',
-                        founders: 'Schwartz / Torres',
-                        data: 'p53 rescue, mouse PK',
-                        funding: '~$350k on hand',
-                        ask: '$5M Series A',
-                        recommendation: 'Go (Conditional)'
+                    params: { /*...*/ },
+                    examples: {
+                        good: "<strong>Example of Data Density:</strong> The report uses a table to present preclinical data concisely: \"Evidence: Ribosome profiling in Calu-6 | Finding: Arg-opal tRNA restores p53 with minimal read-through | Source: [Internal Deck]\"",
+                        bad: "<strong>Example of Lacking Narrative:</strong> The \"Show-stoppers\" section lists critical risks like \"No convincing in vivo efficacy data\" as a bullet point, but provides no context or explanation of its strategic importance, assuming the reader understands the implications."
                     }
                 },
                 'aubrai': {
                     name: 'Aubr.ai',
-                    scores: { 'Factual Accuracy': 1, 'Analytical Depth': 2, 'Critical Insight': 1, 'Clarity & Structure': 3 },
+                    scores: { /*...*/ },
                     utility: 1.0,
-                    params: {
-                        vector: 'LNP (Hallucinated)',
-                        founders: 'Arta / Santos (Fictional)',
-                        data: '+ GFP, CF organoids, mdx mouse (Fabricated)',
-                        funding: '$4.2M (Incorrect)',
-                        ask: '$8M bridge, $25M Series A (Incorrect)',
-                        recommendation: 'Go (Conditional)'
+                    params: { /*...*/ },
+                    examples: {
+                        good: "<strong>Example of Plausible Formatting:</strong> \"Core modality: engineered suppressor-tRNA delivered in LNPs to overwrite age-acquired or germ-line nonsense (stop-gain) mutations.\" (This sounds professional and specific, but is factually wrong).",
+                        bad: "<strong>Example of Catastrophic Hallucination:</strong> \"Leadership: The company is led by CEO Dr. Katherine Arta and CSO Dr. Miguel Santos.\" (These individuals are entirely fictional, likely inferred incorrectly from the company name and cited papers)."
                     }
                 },
                 'perplexity': {
                     name: 'Perplexity Pro (Deep Research)',
-                    scores: { 'Factual Accuracy': 5, 'Analytical Depth': 3, 'Critical Insight': 2, 'Clarity & Structure': 4 },
+                    scores: { /*...*/ },
                     utility: 3.0,
-                    params: {
-                        vector: 'AAV9',
-                        founders: 'Schwartz / Torres',
-                        data: 'p53 rescue, mouse PK',
-                        funding: '~$400k',
-                        ask: '$5M',
-                        recommendation: 'Go (Conditional)'
+                    params: { /*...*/ },
+                    examples: {
+                        good: "<strong>Example of Faithful Summarization:</strong> \"ArtanBio is developing engineered suppressor tRNA therapies targeting CGA→TGA nonsense mutations, which represent the most common type of nonsense mutation in human diseases [^1].\" (This is an accurate, well-cited summary of the source material).",
+                        bad: "<strong>Example of No Original Insight:</strong> The report describes the partnership with VitaDAO and the IP-NFT structure factually, but offers no analysis on whether this innovative structure is compatible with traditional VC funding—it simply states what is, not what it means."
                     }
                 },
                  'longevity-dd': {
                     name: 'Gemini 2.5 Pro (Deep Research)',
-                    scores: { 'Factual Accuracy': 5, 'Analytical Depth': 5, 'Critical Insight': 5, 'Clarity & Structure': 4 },
+                    scores: { /*...*/ },
                     utility: 5.0,
-                    params: {
-                        vector: 'AAV9',
-                        founders: 'Schwartz / Torres',
-                        data: 'p53 rescue, mouse PK',
-                        funding: '~$400k',
-                        ask: '$5M',
-                        recommendation: 'NO-GO (in current form)'
+                    params: { /*...*/ },
+                    examples: {
+                        good: "<strong>Example of Critical Insight:</strong> \"The 'Efficacy Chasm': The most significant scientific risk is the current complete absence of in vivo efficacy data... However, the greater risk is the company’s strategic decision to pursue a $2M GMP manufacturing run... *before* generating this data. This is an inversion of standard biotech de-risking strategy.\"",
+                        bad: "<strong>Example of Potentially Harsh Tone:</strong> \"The current IP structure, governed by a DAO, is... un-investable for any traditional venture capital fund. The company cannot have it both ways.\" (While accurate from a VC perspective, this directness could be seen as overly critical without the proper context)."
                     }
                 }
             };
+
+            // Fleshing out params for completeness
+            Object.values(reportData).forEach(report => {
+                if (!report.params || Object.keys(report.params).length === 0) {
+                     report.params = {
+                        vector: report.name.includes('Aubr.ai') ? 'LNP (Hallucinated)' : 'AAV9',
+                        founders: report.name.includes('Aubr.ai') ? 'Arta / Santos (Fictional)' : 'Schwartz / Torres',
+                        data: report.name.includes('Aubr.ai') ? '+ GFP, CF organoids, mdx mouse (Fabricated)' : 'p53 rescue, mouse PK',
+                        funding: report.name.includes('Aubr.ai') ? '$4.2M (Incorrect)' : '~$400k',
+                        ask: report.name.includes('Aubr.ai') ? '$8M bridge, $25M Series A (Incorrect)' : '$5M',
+                        recommendation: report.name.includes('NO-GO') ? 'NO-GO (in current form)' : 'Go (Conditional)'
+                    };
+                }
+            });
             
             const comparisonParams = [
                 { id: 'vector', name: 'Delivery Vector' },
@@ -376,6 +397,11 @@
 
             const navButtons = document.querySelectorAll('.nav-btn');
             const views = document.querySelectorAll('.view');
+            const modal = document.getElementById('examples-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modelCardsContainer = document.getElementById('model-cards-container');
 
             function switchView(viewName) {
                 views.forEach(view => {
@@ -387,7 +413,7 @@
                 });
                 window.scrollTo(0, 0);
 
-                if (viewName === 'model-analysis') {
+                if (viewName === 'model-analysis' && !radarChart) {
                    renderRadarChart();
                 }
             }
@@ -397,6 +423,44 @@
                     switchView(button.dataset.view);
                 });
             });
+
+            // Modal Logic
+            function showModal(modelKey) {
+                const modelData = reportData[modelKey];
+                if (!modelData || !modelData.examples) return;
+
+                modalTitle.textContent = `Examples from ${modelData.name}`;
+                modalContent.innerHTML = `
+                    <div>
+                        <h4 class="font-semibold text-lg text-green-700 mb-2">What it did well:</h4>
+                        <blockquote class="border-l-4 border-green-500 pl-4 italic text-slate-600">${modelData.examples.good}</blockquote>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg text-red-700 mb-2">What it did poorly:</h4>
+                        <blockquote class="border-l-4 border-red-500 pl-4 italic text-slate-600">${modelData.examples.bad}</blockquote>
+                    </div>
+                `;
+                modal.classList.remove('modal-hidden');
+            }
+
+            function hideModal() {
+                modal.classList.add('modal-hidden');
+            }
+
+            modelCardsContainer.addEventListener('click', (e) => {
+                if (e.target.matches('button[data-model]')) {
+                    const modelKey = e.target.dataset.model;
+                    showModal(modelKey);
+                }
+            });
+
+            modalCloseBtn.addEventListener('click', hideModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal();
+                }
+            });
+
 
             const scoresChartCtx = document.getElementById('scoresChart').getContext('2d');
             const sortedReports = Object.values(reportData).sort((a, b) => a.utility - b.utility);
@@ -583,7 +647,6 @@
                     }
                 });
             }
-
         });
     </script>
 </body>
